@@ -7,13 +7,22 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] public int totalGem;
-    [SerializeField] public int collectedGem;   
+    [SerializeField] public int totalCoinsCollected;
+    [SerializeField] public int totalCoin;
+    [SerializeField] public int collectedCoin;   
     [SerializeField] private int lives;
+    [SerializeField] private int stage;
     [SerializeField] private int level;
+    [SerializeField] private int defaultLives;
+    [SerializeField] private int livesPurchased;
+
+    [SerializeField] private int priceOfAddingLives;
+    [SerializeField] private int priceOfIncreasingGemEarning1;
+    [SerializeField] private int priceOfIncreasingGemEarning2;
+
     [SerializeField] public bool isGameActive;
 
-    [SerializeField] public int levelNumber;
+    [SerializeField] public int stageNumber;
 
 // BAK
     [SerializeField] private float maxZRange = 45;
@@ -28,11 +37,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] public GameObject WinScreen;
     [SerializeField] public GameObject LoseScreen;
     [SerializeField] public GameObject GameScreen;
+    [SerializeField] public GameObject UpdatesScreen;
+
+    [SerializeField] private GameObject lastScreen;
+    
+
+    [SerializeField] public TextMeshProUGUI stageText;
     [SerializeField] public TextMeshProUGUI levelText;
-    [SerializeField] public TextMeshProUGUI gemText;
-    [SerializeField] public TextMeshProUGUI earnedGemText;
-    [SerializeField] public TextMeshProUGUI lostGemText;
+    [SerializeField] public TextMeshProUGUI coinText;
+    [SerializeField] public TextMeshProUGUI earnedCoinText;
+    [SerializeField] public TextMeshProUGUI lostCoinText;
     [SerializeField] public TextMeshProUGUI livesText;
+    [SerializeField] public TextMeshProUGUI livesTextAtUpdatesPanel;
+
+    [SerializeField] public TextMeshProUGUI livesPriceText;
+    [SerializeField] public TextMeshProUGUI gemEarning1Text;
+    [SerializeField] public TextMeshProUGUI gemEarning2Text;
 
     // arraya çevirilebilir
     [SerializeField] public GameObject gemPrefab;
@@ -48,12 +68,16 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        totalGem=0;
-        
-        level=1;
+        level =1;
+        totalCoin=90;
+        totalCoinsCollected = totalCoin;
+        stage=1;
+        defaultLives = 3;
 
-        gemText.text = totalGem.ToString();
+        lastScreen = null;
+        coinText.text = totalCoin.ToString();
         levelText.text = level.ToString();
+        stageText.text = "Stage " + stage.ToString() ;
     }
 
     // Update is called once per frame
@@ -62,11 +86,14 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void UpdateGem(int gemToAdd) {
+    public void UpdateCoins(int coinsToAdd) {
 
-        collectedGem += gemToAdd;
-        totalGem += gemToAdd;
-        gemText.text = totalGem.ToString();
+        collectedCoin += coinsToAdd;
+        totalCoin += coinsToAdd;
+        coinText.text = totalCoin.ToString();
+
+        totalCoinsCollected = totalCoinsCollected+= coinsToAdd;
+        LevelUp();
         //Debug.Log(totalGoldCollected);
 
     }
@@ -102,12 +129,12 @@ public class GameManager : MonoBehaviour
         WinScreen.SetActive(false);
         GameScreen.SetActive(true);
 
-        CreateLevel(level);
+        CreateStage(stage);
         isGameActive=true;
 
         
-        collectedGem = 0;
-        lives=3;
+        collectedCoin = 0;
+        lives= defaultLives + livesPurchased;
         
         livesText.text = lives.ToString();
     }
@@ -116,13 +143,13 @@ public class GameManager : MonoBehaviour
     {
         DestroyObjects(gemList);
         DestroyObjects(obstacleList);
-        //totalGem += collectedGem;
-        level +=1;
+        //totalCoin += collectedCoin;
+        stage +=1;
         isGameActive = false;
         
-        levelText.text = level.ToString();
-        gemText.text=totalGem.ToString();
-        earnedGemText.text=collectedGem.ToString() + "gems collected!";
+        stageText.text = "Stage " + stage.ToString();
+        coinText.text=totalCoin.ToString();
+        earnedCoinText.text=collectedCoin.ToString() + "coins collected!";
         GameScreen.SetActive(false);
         WinScreen.SetActive(true);
        
@@ -133,15 +160,15 @@ public class GameManager : MonoBehaviour
         //StartGame();
     }
 
-    public void CreateLevel(int levelNumber) {
+    public void CreateStage(int stageNumber) {
         int gemNumber ;
         int obstacleNumber; 
-        if (levelNumber < 5) {
-        gemNumber = 4 + levelNumber * 2;
-        obstacleNumber = levelNumber * 3;
+        if (stageNumber < 5) {
+        gemNumber = 4 + stageNumber * 2;
+        obstacleNumber = stageNumber * 3;
         } else {
-        gemNumber = levelNumber * 3;
-        obstacleNumber = levelNumber * 2;
+        gemNumber = stageNumber * 3;
+        obstacleNumber = stageNumber * 2;
         }
 
         for (int i = 0; i<= gemNumber; i++) {
@@ -191,8 +218,65 @@ public class GameManager : MonoBehaviour
         DestroyObjects(obstacleList);
         LoseScreen.SetActive(true);
         GameScreen.SetActive(false);
-        lostGemText.text = totalGem.ToString() + " gems lost! :( " ;
+        lostCoinText.text = totalCoin.ToString() + " coins lost! :( " ;
 
+    }
+
+    void LevelUp() {
+
+        if (totalCoinsCollected >=  100) {
+            if( totalCoinsCollected % 100 == 0) {
+                level +=1;
+                levelText.text = level.ToString();
+                Debug.Log(level);
+            }
+        }
+    }
+
+    public void GoToStore () {
+       
+        
+       
+        if (EntryScreen.activeSelf) {
+        EntryScreen.SetActive(false);
+        lastScreen = EntryScreen;
+
+        } else if (WinScreen.activeSelf) {
+
+        WinScreen.SetActive(false);
+        lastScreen = WinScreen;
+        }
+        
+        UpdatesScreen.SetActive(true);
+        CreateStore();
+
+    }
+    public void BackToMenu () {
+        
+        lastScreen.SetActive(true);
+        UpdatesScreen.SetActive(false);
+    }
+
+    public void IncreaseGemEarnings () {
+
+    }
+
+    public void IncreaseLives () {
+        if ( totalCoin >= priceOfAddingLives){
+        totalCoin -= priceOfAddingLives;
+        livesPurchased += 1 ;
+        coinText.text = totalCoin.ToString();
+        }
+        else {
+            // yeterli paranız yok.
+        }
+        livesTextAtUpdatesPanel.text = (defaultLives+livesPurchased).ToString(); 
+    }
+    public void CreateStore() {
+        livesTextAtUpdatesPanel.text = (defaultLives+livesPurchased).ToString();
+        livesPriceText.text = priceOfAddingLives.ToString();
+        gemEarning1Text.text = priceOfIncreasingGemEarning1.ToString();
+        gemEarning2Text.text = priceOfIncreasingGemEarning2.ToString();
     }
 
 }

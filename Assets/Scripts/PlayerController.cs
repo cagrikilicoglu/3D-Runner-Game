@@ -21,6 +21,11 @@ public class PlayerController : MonoBehaviour
     private Animator playerAnimator;
     private Rigidbody playerRb;
 
+    [SerializeField] private ParticleSystem hitParticle;
+    [SerializeField] private ParticleSystem fireworksParticle;
+    [SerializeField] private ParticleSystem explosionParticleBlue;
+    [SerializeField] private ParticleSystem explosionParticleYellow;
+
    void Awake() {
         swerveInputSystemScript = GetComponent<SwerveInputSystem>();
         playerAnimator = GetComponent<Animator>();
@@ -79,13 +84,14 @@ public class PlayerController : MonoBehaviour
         //gameOver = true;
         playerAnimator.SetBool("isRunning", false);
         gameManagerScript.UpdateLives();
+
+        HitEffect();
     }        
 
     else if (collision.gameObject.CompareTag("Collectable")) {
-        
-
+        ExplosionEffect(collision.gameObject);
         collision.gameObject.SetActive(false);
-        gameManagerScript.UpdateGem(1);
+        gameManagerScript.UpdateCoins(collision.gameObject.GetComponent<Gem>().coinValue);
 
     }        
     
@@ -96,7 +102,13 @@ public class PlayerController : MonoBehaviour
         
         shouldPlayerMove=false;
         playerAnimator.SetTrigger("victory");
+        
+        FireworkEffect();
+
+
         playerAnimator.SetBool("isRunning", false);
+
+        transform.GetChild(3).gameObject.SetActive(true);
         StartCoroutine(WaitForAnimantion());
         
         
@@ -106,9 +118,28 @@ public class PlayerController : MonoBehaviour
         Debug.Log("okkkkk");
 
         yield return new WaitForSeconds(celebrationTime);
+    
+
+        transform.GetChild(3).gameObject.SetActive(false);
+        transform.GetChild(3).gameObject.GetComponent<CinematicScene>().ReturnToInitialPosition();  
         gameManagerScript.WinGame();
         transform.position = initalPlayerPosition;
         
     }
+
+     void ExplosionEffect (GameObject gem)
+    {
+        Instantiate(explosionParticleBlue, gem.transform.position, explosionParticleBlue.transform.rotation);
+    }
+
+     void HitEffect ()
+     {
+         Instantiate(hitParticle, transform.position, hitParticle.transform.rotation);
+    }
+     
+     void FireworkEffect() 
+     {
+          Instantiate(fireworksParticle, transform.position + new Vector3 (0,5,0) , fireworksParticle.transform.rotation);
+     }
 
 }
