@@ -10,7 +10,7 @@ public class ObjectPool : MonoBehaviour
     public List<GameObject> pooledGems;
    // public GameObject objectToPool;
     public GameObject obstacleToPool;
-    public GameObject gemToPool;
+    public List<GameObject> gemsToPool;
 
     [SerializeField] private int amountToPool;
 
@@ -27,8 +27,12 @@ public class ObjectPool : MonoBehaviour
         pooledGems = new List<GameObject>();
         for (int i = 0; i < amountToPool; i++)
         {
+           
             GameObject obstacle = (GameObject)Instantiate(obstacleToPool);
-            GameObject gem = (GameObject)Instantiate(gemToPool);
+
+            int randomGemIndex = Random.Range(0,2);
+            GameObject gem = (GameObject)Instantiate(gemsToPool[randomGemIndex]);
+            
             obstacle.SetActive(false);
             gem.SetActive(false);
             pooledObstacles.Add(obstacle);

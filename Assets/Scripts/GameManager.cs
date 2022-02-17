@@ -20,16 +20,21 @@ public class GameManager : MonoBehaviour
     [SerializeField] private int priceOfIncreasingGemEarning1;
     [SerializeField] private int priceOfIncreasingGemEarning2;
 
+    [SerializeField] private int maxSafeSpawnAttempts;
     [SerializeField] public bool isGameActive;
+
+    [SerializeField] private bool isClickAvailable;
 
     [SerializeField] public int stageNumber;
 
 // BAK
-    [SerializeField] private float maxZRange = 45;
+    [SerializeField] private float maxZRange = 70;
     [SerializeField] private float minZRange = 0;
     [SerializeField] private float xRange = 1;
     [SerializeField] private float yPositionGem = 0.4f;
     [SerializeField] private float yPositionObstacle = 0;
+
+    [SerializeField] private float objectCheckRadius =3;
 
     [SerializeField] public int celebrationTime = 3;
 
@@ -38,6 +43,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] public GameObject LoseScreen;
     [SerializeField] public GameObject GameScreen;
     [SerializeField] public GameObject UpdatesScreen;
+
+  
 
     [SerializeField] private GameObject lastScreen;
     
@@ -58,6 +65,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] public GameObject gemPrefab;
     [SerializeField] public GameObject obstaclePrefab;
 
+
+    // sil
+    private int safeCount = 0;
+
     private List<GameObject> gemList =  new List<GameObject>();
     private List<GameObject> obstacleList =  new List<GameObject>(); 
 
@@ -74,20 +85,27 @@ public class GameManager : MonoBehaviour
         stage=1;
         defaultLives = 3;
 
+        maxSafeSpawnAttempts = 100;
+
         lastScreen = null;
         coinText.text = totalCoin.ToString();
         levelText.text = level.ToString();
         stageText.text = "Stage " + stage.ToString() ;
+
+        isClickAvailable = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        // if (isClickAvailable & Input.GetMouseButtonDown(0)) {
+        //     StartGame();
+        // }
     }
 
     public void UpdateCoins(int coinsToAdd) {
 
+        
         collectedCoin += coinsToAdd;
         totalCoin += coinsToAdd;
         coinText.text = totalCoin.ToString();
@@ -131,6 +149,7 @@ public class GameManager : MonoBehaviour
 
         CreateStage(stage);
         isGameActive=true;
+        isClickAvailable=false;
 
         
         collectedCoin = 0;
@@ -149,7 +168,7 @@ public class GameManager : MonoBehaviour
         
         stageText.text = "Stage " + stage.ToString();
         coinText.text=totalCoin.ToString();
-        earnedCoinText.text=collectedCoin.ToString() + "coins collected!";
+        earnedCoinText.text=collectedCoin.ToString() + " coins collected!";
         GameScreen.SetActive(false);
         WinScreen.SetActive(true);
        
@@ -163,21 +182,81 @@ public class GameManager : MonoBehaviour
     public void CreateStage(int stageNumber) {
         int gemNumber ;
         int obstacleNumber; 
-        if (stageNumber < 5) {
-        gemNumber = 4 + stageNumber * 2;
-        obstacleNumber = stageNumber * 3;
-        } else {
-        gemNumber = stageNumber * 3;
+        if (stageNumber < 4) {
+        gemNumber = 1 + stageNumber * 2;
         obstacleNumber = stageNumber * 2;
+        } else if (stageNumber >= 4 && stageNumber < 7) {
+        gemNumber = stageNumber + 4;
+        obstacleNumber = stageNumber + 3;
+        } else {
+            gemNumber = 10;
+            obstacleNumber = 10;
         }
 
-        for (int i = 0; i<= gemNumber; i++) {
+        for (int i = 0; i <= gemNumber; i++) {
 
-            float zPosition = Random.Range(minZRange, maxZRange);
-            float xPosition = Random.Range(-xRange, xRange);
-            Vector3 randomPos = new Vector3(xPosition, yPositionGem, zPosition);
+            //float zPosition = Random.Range(minZRange, maxZRange);
+            //float xPosition = Random.Range(-xRange, xRange);
+
+            float zPosition;
+            float xPosition;
+            Vector3 randomPos;
+
+
+            bool isPositionValid;
+            int spawnAttempts = 0;
+
+            do {
+            zPosition = Random.Range(minZRange, maxZRange);
+            xPosition = Random.Range(-xRange, xRange);
+            randomPos = new Vector3(xPosition, yPositionGem, zPosition);
+
+            isPositionValid = true;
+
+            isPositionValid = CheckOverlap(randomPos);
+            spawnAttempts++;
+            } while (!isPositionValid && spawnAttempts < maxSafeSpawnAttempts);
+
+            // while(!isPositionValid && spawnAttempts < maxSpawnAttempts)
+            // {
+            // zPosition = Random.Range(minZRange, maxZRange);
+            // xPosition = Random.Range(-xRange, xRange);
+            // spawnAttempts++;
+            
+            // randomPos = new Vector3(xPosition, yPositionGem, zPosition);
+            // isPositionValid = true;
+            // Collider[] Colliders = Physics.OverlapSphere(randomPos, 3);
+            // // //int numColliders = Physics.OverlapSphereNonAlloc(randomPos, 20, Collider[] Results);
+            // foreach (Collider col in Colliders) 
+            // {
+            // if(col != null) {
+            // isPositionValid = false;
+            //     Debug.Log("sıkıntı");
+            // }
+                
+            // }
+            // }
+
+            // if (Colliders.Length == 0 || Colliders == null) 
+            // {
+            //     isPositionValid =true;
+            // }
+            // safeCount++ ;
+            // if(safeCount == 50) {
+            //     Debug.Log(safeCount);
+            //     break;
+            // }
+            // if(isPositionValid) {
+            //     break;
+            // }
+
+            // } while (isPositionValid);
+            //Vector3 randomPos = new Vector3(xPosition, yPositionGem, zPosition);
+
+            //Collider[] Colliders = Physics.OverlapSphere(randomPos, 5);
 
             //var gem = Instantiate(gemPrefab, randomPos, gemPrefab.transform.rotation);
+            if (isPositionValid) {
             var gem = ObjectPool.SharedInstance.GetPooledGem();
             if (gem != null) {
             
@@ -185,22 +264,37 @@ public class GameManager : MonoBehaviour
             gem.SetActive(true);
             gemList.Add(gem);
             }
+            }
         }
 
 
         for (int i = 0; i<= obstacleNumber; i++) {
             
-            float zPosition = Random.Range(minZRange, maxZRange);
-            float xPosition = Random.Range(-xRange, xRange);
-            Vector3 randomPos = new Vector3(xPosition, yPositionObstacle, zPosition);
+            float zPosition;
+            float xPosition;
+            Vector3 randomPos;
 
+            bool isPositionValid;
+            int spawnAttempts = 0;
+
+            do {
+             zPosition = Random.Range(minZRange, maxZRange);
+             xPosition = Random.Range(-xRange, xRange);
+             randomPos = new Vector3(xPosition, yPositionObstacle, zPosition);
+            isPositionValid = true;
+
+            isPositionValid = CheckOverlap(randomPos);
+            spawnAttempts++;
+            } while (!isPositionValid && spawnAttempts < maxSafeSpawnAttempts);
+
+            if(isPositionValid) {
             var obstacle = ObjectPool.SharedInstance.GetPooledObstacle();
             if (obstacle != null) {
             obstacle.transform.position = randomPos;
             obstacle.SetActive(true);
             obstacleList.Add(obstacle);
             }
-            
+            }
         }
 
     }
@@ -278,5 +372,30 @@ public class GameManager : MonoBehaviour
         gemEarning1Text.text = priceOfIncreasingGemEarning1.ToString();
         gemEarning2Text.text = priceOfIncreasingGemEarning2.ToString();
     }
+
+    public bool CheckOverlap(Vector3 randomPosition) {
+
+            bool isPositionValid = true;
+            Collider[] Colliders = Physics.OverlapSphere(randomPosition, objectCheckRadius);
+            // //int numColliders = Physics.OverlapSphereNonAlloc(randomPos, 20, Collider[] Results);
+            foreach (Collider col in Colliders) 
+            {
+            if(col != null) {
+                if(col.gameObject.CompareTag("Collectable") || col.gameObject.CompareTag("Obstacle")) {
+            isPositionValid = false;
+                }
+            }
+            }
+            return isPositionValid;
+    }
+
+    // private void OnMouseDown() {
+    //     if(isClickAvailable) {
+    //         StartGame();
+    //         Debug.Log("clicked");
+    //     }
+    // }
+
+  
 
 }
