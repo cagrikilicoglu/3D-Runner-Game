@@ -5,10 +5,8 @@ using UnityEngine;
 public class ObjectPool : MonoBehaviour
 {
     public static ObjectPool SharedInstance;
-    //public List<GameObject> pooledObjects;
-    public List<GameObject> pooledObstacles;
-    public List<GameObject> pooledGems;
-   // public GameObject objectToPool;
+    private List<GameObject> pooledObstacles;
+    private List<GameObject> pooledGems;
     public GameObject obstacleToPool;
     public List<GameObject> gemsToPool;
 
@@ -22,17 +20,17 @@ public class ObjectPool : MonoBehaviour
 
     void Start()
     {
-        // set 20 obstacles and gems at the start of the game and pool them
+        // set 20 obstacles and gems at the start of the game and pool them to spawn in the game
         pooledObstacles = new List<GameObject>();
         pooledGems = new List<GameObject>();
         for (int i = 0; i < amountToPool; i++)
-        {
-           
+        {  
             GameObject obstacle = (GameObject)Instantiate(obstacleToPool);
 
+            // Determine which type of collectable is pooled randomly
             int randomGemIndex = Random.Range(0,2);
             GameObject gem = (GameObject)Instantiate(gemsToPool[randomGemIndex]);
-            
+
             obstacle.SetActive(false);
             gem.SetActive(false);
             pooledObstacles.Add(obstacle);
@@ -40,10 +38,9 @@ public class ObjectPool : MonoBehaviour
         }
     }
 
-  
+    // Get an available one of the pooled obstacles when needed
     public GameObject GetPooledObstacle()
     {
-     
         for (int i = 0; i < pooledObstacles.Count; i++)
         {
             if (!pooledObstacles[i].activeInHierarchy)
@@ -54,9 +51,10 @@ public class ObjectPool : MonoBehaviour
         }
         return null;
     }
+
+    //Get an available one of the pooled collectables when needed
     public GameObject GetPooledGem()
     {
-     
         for (int i = 0; i < pooledGems.Count; i++)
         {
             if (!pooledGems[i].activeInHierarchy)

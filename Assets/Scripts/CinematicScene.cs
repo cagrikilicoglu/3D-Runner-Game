@@ -9,19 +9,17 @@ public class CinematicScene : MonoBehaviour
     [SerializeField] private float rotationSpeed;
     [SerializeField] private Vector3 initialPosition;
     [SerializeField] private Quaternion initialRotation;
-    // Start is called before the first frame update
+    
     void Awake()
     {
-    
+    // Hold the initial position and rotation of the cinematic camera
     initialPosition = transform.position;
     initialRotation = transform.rotation;
-    
-    
     }
 
-    // Update is called once per frame
     void Update()
     {
+        // when the cinematic camera is activated make cinematic movement
         if (gameObject.activeSelf) {
         CinematicMovement();
         } 
@@ -33,6 +31,7 @@ public class CinematicScene : MonoBehaviour
         transform.Rotate(Vector3.up * -rotationSpeed * Time.deltaTime, Space.World);
     }
 
+    // After the cinematic camera is off return it to initial position for the next time
     public void ReturnToInitialPosition() {
         transform.position = initialPosition;
         transform.rotation = initialRotation;
